@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.btc.dao.BTCAddressMapper">
+    <resultMap id="BaseResultMap" type="com.btc.domain.BTCAddress">
+        <id column="address" jdbcType="CHAR" property="address"/>
+        <result column="privatekey" jdbcType="VARCHAR" property="privatekey"/>
+        <result column="type" jdbcType="VARCHAR" property="type"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        address, privatekey, type
+    </sql>
+
+
+    <select id="getAddressCount" resultType="java.lang.Integer">
+
+        SELECT count(1) FROM `btc_address` WHERE address=#{address}
+
+    </select>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from btc_address
+        where address = #{address,jdbcType=CHAR}
+    </select>
+
+
+
+
+
+    <!-- 以下暂时无用 -->
+
+
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+        DELETE FROM btc_address
+        WHERE address = #{address,jdbcType=CHAR}
+    </delete>
+
+    <insert id="insert" parameterType="com.btc.domain.BTCAddress">
+        INSERT INTO btc_address (address, privatekey, type
+        )
+        VALUES (#{address,jdbcType=CHAR}, #{privatekey,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR}
+        )
+    </insert>
+
+
+
+    <insert id="insertSelective" parameterType="com.btc.domain.BTCAddress">
+        insert into btc_address
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="address != null">
+                address,
+            </if>
+            <if test="privatekey != null">
+                privatekey,
+            </if>
+            <if test="type != null">
+                type,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="address != null">
+                #{address,jdbcType=CHAR},
+            </if>
+            <if test="privatekey != null">
+                #{privatekey,jdbcType=VARCHAR},
+            </if>
+            <if test="type != null">
+                #{type,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.btc.domain.BTCAddress">
+        update btc_address
+        <set>
+            <if test="privatekey != null">
+                privatekey = #{privatekey,jdbcType=VARCHAR},
+            </if>
+            <if test="type != null">
+                type = #{type,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where address = #{address,jdbcType=CHAR}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.btc.domain.BTCAddress">
+        UPDATE btc_address
+        SET privatekey = #{privatekey,jdbcType=VARCHAR},
+            type       = #{type,jdbcType=VARCHAR}
+        WHERE address = #{address,jdbcType=CHAR}
+    </update>
+
+</mapper>

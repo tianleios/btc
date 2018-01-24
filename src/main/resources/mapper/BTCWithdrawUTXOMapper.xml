@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.btc.dao.BTCWithdrawUTXOMapper">
+    <resultMap id="BaseResultMap" type="com.btc.domain.BTCWithdrawUTXO">
+        <id column="txid" jdbcType="CHAR" property="txid" />
+        <id column="vout" jdbcType="INTEGER" property="vout" />
+        <result column="count" jdbcType="DECIMAL" property="count" />
+        <result column="address" jdbcType="CHAR" property="address" />
+        <result column="sync_time" jdbcType="TIMESTAMP" property="syncTime" />
+        <result column="block_height" jdbcType="INTEGER" property="blockHeight" />
+        <result column="status" jdbcType="VARCHAR" property="status" />
+        <result column="withdra_twxid" jdbcType="CHAR" property="withdrawTxid" />
+    </resultMap>
+    <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.btc.domain.BTCWithdrawUTXO">
+        <result column="script_pub_key" jdbcType="LONGVARCHAR" property="scriptPubKey" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        txid, vout, count, address, sync_time, block_height, status, withdraw_txid
+    </sql>
+    <sql id="Blob_Column_List">
+        script_pub_key
+    </sql>
+
+
+
+    <insert id="insertBatch" parameterType="List">
+
+        insert into btc_withdraw_utxo (txid, vout, count,
+        address, sync_time, block_height,
+        status, spend_txid, script_pub_key
+        )
+        VALUES
+        <foreach collection="withdrawUTXOList" item="utxo" open="(" separator="," close=")" >
+            #{utxo.txid}, #{utxo.vout}, #{utxo.count},
+            #{utxo.address}, #{utxo.syncTime}, #{utxo.blockHeight},
+            #{utxo.status}, #{utxo.scriptPubKey}
+        </foreach>
+
+    </insert>
+
+    <update id="updateUTXOToUsed">
+        UPDATE `btc_withdraw_utxo` SET `status` = '2' WHERE txid = #{txId} and vout = #{vout}
+    </update>
+
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.btc.domain.BTCWithdrawUTXO">
+        update btc_withdraw_utxo
+        <set>
+            <if test="count != null and count != '' ">
+                count = #{count,jdbcType=DECIMAL},
+            </if>
+            <if test="address != null and address != '' ">
+                address = #{address,jdbcType=CHAR},
+            </if>
+            <if test="syncTime != null and blockHeight != ''">
+                sync_time = #{syncTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="blockHeight != null and blockHeight != '' ">
+                block_height = #{blockHeight,jdbcType=INTEGER},
+            </if>
+            <if test="status != null and status != '' " >
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="spendTxid != null and spendTxid != '' ">
+                spend_txid = #{spendTxid,jdbcType=CHAR},
+            </if>
+            <if test="scriptPubKey != null and scriptPubKey != '' ">
+                script_pub_key = #{scriptPubKey,jdbcType=LONGVARCHAR},
+            </if>
+        </set>
+        where txid = #{txid,jdbcType=CHAR}
+        and vout = #{vout,jdbcType=INTEGER}
+    </update>
+
+
+</mapper>

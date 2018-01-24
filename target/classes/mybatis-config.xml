@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!-- 构建 SqlSessionFactory 时会加载该配置文件 -->
+
+    <!--<settings>
+        <setting name="logImpl" value="LOG4J2"/>
+    </settings>-->
+
+   <!-- <typeAliases>
+        <typeAlias alias="User" type="com.tianlei.pojo.User"/>
+    </typeAliases>-->
+
+    <!-- 交给spring管理 -->
+    <!--<environments default="development">-->
+        <!--&lt;!&ndash;默认环境&ndash;&gt;-->
+        <!--<environment id="development">-->
+            <!--<transactionManager type="JDBC" />-->
+            <!--&lt;!&ndash; 配置数据库连接信息 &ndash;&gt;-->
+            <!--<dataSource type="POOLED">-->
+                <!--<property name="driver" value="com.mysql.jdbc.Driver" />-->
+                <!--<property name="url" value="jdbc:mysql://127.0.0.1:3306/mysql_study_db?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false" />-->
+                <!--<property name="username" value="root" />-->
+                <!--<property name="password" value="q4121585" />-->
+            <!--</dataSource>-->
+        <!--</environment>-->
+
+    <!--</environments>-->
+
+    <plugins>
+        <plugin interceptor="com.btc.sql.MyBatisPlugin">
+        </plugin>
+    </plugins>
+
+    <!--<mappers>-->
+        <!--<mapper class="com.tianlei.dao.UserMapper"/>-->
+        <!--&lt;!&ndash;当前配置文件的相对路径 / 可不加&ndash;&gt;-->
+        <!--<mapper resource="/mapper/UserMapper.xml"/>-->
+    <!--</mappers>-->
+
+
+</configuration>
