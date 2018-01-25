@@ -1,7 +1,7 @@
 package com.btc.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.btc.Expection.BizExpection;
 import com.btc.Expection.EBizError;
 import com.btc.dao.BTCAddressMapper;
@@ -9,9 +9,9 @@ import com.btc.dao.BTCDefaultUTXOMapper;
 import com.btc.dao.BTCWithdrawUTXOMapper;
 import com.btc.domain.BTCAddress;
 import com.btc.domain.BTCDefaultUTXO;
-import com.btc.domain.BTCInfo.*;
-import com.btc.domain.BTCUTXO;
+import com.btc.domain.BTCInfo.BTCFee;
 import com.btc.domain.BTCWithdrawUTXO;
+import com.btc.domain.original.*;
 import com.btc.enumeration.EAddressType;
 import com.btc.enumeration.EDefaultUTXOStatus;
 import com.btc.enumeration.EWithdrawUTXOStatus;
@@ -26,6 +26,7 @@ import org.bitcoinj.params.RegTestParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -47,8 +48,12 @@ public class BTCService implements IBTCService {
     BTCAddressMapper addressMapper;
 
 
-    private static Long currentBlockHeight = Long.valueOf(1260264);
-
+    // 1260212 第一次充值地址
+    // 1260264
+//      Long currentBlockHeight = Long.valueOf(1260212);
+//     Long.valueOf(1260264);
+//    1260418
+    private static Long currentBlockHeight = Long.valueOf(1260418);
 
     @Override
     public String address(boolean isTest) {
@@ -98,6 +103,13 @@ public class BTCService implements IBTCService {
 
     }
 
+    @Override
+    public List<BTCDefaultUTXO> selectUTXOList(String status) {
+
+        return this.defaultUTXOMapper.selectList(status, 0, 100);
+
+    }
+
     private OkHttpClient okHttpClient() {
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -108,166 +120,203 @@ public class BTCService implements IBTCService {
 
     }
 
-//    @Transactional(rollbackFor = RuntimeException.class)
-    @Scheduled(cron = "*/10 * * * * ?")
-    public void exploreBlockChain() {
 
-        OkHttpClient okHttpClient = this.okHttpClient();
-        //读取区块高度
+    private String blockHash(Long blockHeight) {
 
-        // 1260212 第一次充值地址
-        // 1260264
-//      Long currentBlockHeight = Long.valueOf(1260212);
-
-        String requestUrl = this.blockUrl(currentBlockHeight);
+        String requestUrl = "https://testnet.blockexplorer.com/api/block-index/" + blockHeight;
         Request request = new Request.Builder()
                 .get()
-                .url(this.blockUrl(currentBlockHeight))
+                .url(requestUrl)
                 .build();
-        Call call = okHttpClient.newCall(request);
+
+        Call call = this.okHttpClient().newCall(request);
+
+
         try {
 
             Response response = call.execute();
             String jsonStr = response.body().string();
-
-            //获取主链的block
-            Map blocks = JSON.parseObject(jsonStr, Map.class);
-            JSONArray jsonArray = (JSONArray) blocks.get("blocks");
-
-            BTCBlock btcBlock = new BTCBlock();
-
-            for (int i = 0; i < jsonArray.size(); i++) {
-                BTCBlock block = jsonArray.getObject(i, BTCBlock.class);
-                if (block.getMain_chain()) {
-                    btcBlock = block;
-                    break;
-                }
-            }
-
-            if (btcBlock.getHash() == null) {
-                throw new BizExpection("-1", "block 解析错误");
-            }
-
-            //用于存储 UTXO
-            List<BTCDefaultUTXO> defaultBtcUTXOList = new ArrayList<>();
-
-            //存储提现地址的 utxo
-            List<BTCWithdrawUTXO> withdrawBtcUTXOList = new ArrayList<>();
-
-            //用于存储已花费
-            List<BTCDefaultUTXO> defaultBtcSpendedTXOList = new ArrayList<>();
-
-            //存储提现地址的 utxo
-            List<BTCWithdrawUTXO> withdrawBtcSpendedUTXOList = new ArrayList<>();
-
-
-            //遍历交易
-            for (BTCTx btcTx : btcBlock.getTx()) {
-
-                //遍历输入
-                btcTx.getInputs().forEach((BTCInput btcInput) -> {
-
-                    BTCOut preOut = btcInput.getPrev_out();
-                    if (preOut != null) {
-                        String outAddress = preOut.getAddr();
-                        BTCAddress address = this.addressMapper.selectByPrimaryKey(outAddress);
-                        if (address != null) {
-                            //
-                            String addressType = address.getType();
-
-
-                            if (addressType.equals(EAddressType.DEFAULT.getCode())) {
-
-                                BTCDefaultUTXO spendBtcutxo = new BTCDefaultUTXO();
-                                spendBtcutxo.setTxid(preOut.getHash());
-                                btcutxo.setVout(preOut.getN());
-                                defaultBtcSpendedTXOList.add((BTCDefaultUTXO) btcutxo);
-
-                            } else if (addressType.equals(EAddressType.WITHDRAW.getCode())) {
-
-                                BTCWithdrawUTXO btcutxo = new BTCWithdrawUTXO();
-                                btcutxo.setTxid(btcTx.getHash());
-                                btcutxo.setVout(preOut.getN());
-                                withdrawBtcSpendedUTXOList.add(btcutxo);
-
-                            }
-
-                        }
-                    }
-
-                });
-
-                //遍历输出
-                for (BTCOut btcOut : btcTx.getOut()) {
-
-                    String outToAddress = btcOut.getAddr();
-
-                    BTCAddress address = this.addressMapper.selectByPrimaryKey(outToAddress);
-                    if (address != null) {
-
-                        String addressType = address.getType();
-                        if (addressType.equals(EAddressType.DEFAULT.getCode())) {
-//普通utxo收集
-                            BTCDefaultUTXO btcutxo = this.convertOut(btcOut, btcTx.getHash(), btcBlock.getHeight(), EDefaultUTXOStatus.UN_COLLECTION.getCode());
-                            defaultBtcUTXOList.add(btcutxo);
-
-                        } else if (addressType.equals(EAddressType.WITHDRAW.getCode())) {
-//提现utxo收集
-                            BTCUTXO btcutxo = this.convertOut(btcOut, btcTx.getHash(), btcBlock.getHeight(), EWithdrawUTXOStatus.UN_USE.getCode());
-                            withdrawBtcUTXOList.add((BTCWithdrawUTXO) btcutxo);
-
-                        }
-
-                    }
-                }
-
-            }
-
-
-            //变更 输入状态,为已归集
-
-            for (BTCDefaultUTXO utxo : defaultBtcSpendedTXOList) {
-
-                BTCDefaultUTXO updateBtcDefaultUTXO = new BTCDefaultUTXO();
-                updateBtcDefaultUTXO.setTxid(utxo.getTxid());
-                updateBtcDefaultUTXO.setVout(utxo.getVout());
-                updateBtcDefaultUTXO.setStatus(EDefaultUTXOStatus.COLLECTION_ED.getCode());
-                this.defaultUTXOMapper.updateByPrimaryKeySelective(updateBtcDefaultUTXO);
-
-            }
-
-            if (withdrawBtcSpendedUTXOList.size() > 0) {
-
-                withdrawBtcSpendedUTXOList.forEach(utxo -> {
-
-                    BTCWithdrawUTXO updateBtcWithdrawUTXO = new BTCWithdrawUTXO();
-                    updateBtcWithdrawUTXO.setTxid(utxo.getTxid());
-                    updateBtcWithdrawUTXO.setVout(utxo.getVout());
-                    updateBtcWithdrawUTXO.setStatus(EWithdrawUTXOStatus.USE_ED.getCode());
-                    this.withdrawUTXOMapper.updateByPrimaryKeySelective(updateBtcWithdrawUTXO);
-
-
-                });
-            }
-
-            //存储 utxo
-            if (defaultBtcUTXOList.size() > 0) {
-                this.defaultUTXOMapper.insertBatch(defaultBtcUTXOList);
-            }
-
-            if (withdrawBtcUTXOList.size() > 0) {
-                this.withdrawUTXOMapper.insertBatch(withdrawBtcUTXOList);
-            }
-
-            //改变遍历的区块高度
-            currentBlockHeight += 1;
+            Map map = JSONObject.parseObject(jsonStr, Map.class);
+            return (String) map.get("blockHash");
 
         } catch (Exception e) {
 
-            e.printStackTrace();
-            //todo
-            // 此处应该有log
+            throw new BizExpection(EBizError.BLOCK_GET_ERROR);
+
         }
+
+    }
+
+    @Transactional(rollbackFor = RuntimeException.class)
+    @Scheduled(cron = "*/10 * * * * ?")
+    public void exploreBlockChain() {
+
+        //用于存储 UTXO
+        List<BTCDefaultUTXO> defaultBtcUTXOList = new ArrayList<>();
+
+        //存储提现地址的 utxo
+        List<BTCWithdrawUTXO> withdrawBtcUTXOList = new ArrayList<>();
+
+        //用于存储已花费
+        List<BTCDefaultUTXO> defaultBtcSpendedTXOList = new ArrayList<>();
+
+        //存储提现地址的 utxo
+        List<BTCWithdrawUTXO> withdrawBtcSpendedUTXOList = new ArrayList<>();
+
+        OkHttpClient okHttpClient = this.okHttpClient();
+        // 查询的分页
+        Integer pageNum = 0;
+        while (true) {
+
+            String requestUrl = this.blockUrl(currentBlockHeight, pageNum);
+            Request request = new Request.Builder()
+                    .get()
+                    .url(requestUrl)
+                    .build();
+            Call call = okHttpClient.newCall(request);
+            //
+            BTCTXs btctXs = null;
+            try {
+
+                Response response = call.execute();
+                String jsonStr = response.body().string();
+                btctXs = JSON.parseObject(jsonStr, BTCTXs.class);
+                System.out.println(requestUrl);
+            } catch (Exception e) {
+
+                e.printStackTrace();
+            }
+
+            if (btctXs == null) {
+                throw new BizExpection(EBizError.BLOCK_GET_ERROR);
+            }
+
+//            if (btctXs.getPagesTotal() <= 0) {
+//
+//                throw new BizExpection(EBizError.BLOCK_GET_ERROR);
+//
+//            }
+
+            // 说明该区块已经遍历完了
+            if (btctXs.getTxs().size() <= 0) {
+                break;
+            }
+
+            //遍历交易
+            for (BTCOriginalTx originalTx : btctXs.getTxs()) {
+
+                //todo 暂不处理coinbase
+                if (originalTx.getCoinBase() != null && originalTx.getCoinBase()) {
+                    continue;
+                }
+                //遍历输入
+                for (BTCVinUTXO vinUTXO : originalTx.getVin()) {
+
+
+                    String outAddress = vinUTXO.getAddr();
+                    if (outAddress == null || outAddress.length() == 0) {
+                        continue;
+                    }
+
+                    BTCAddress address = this.addressMapper.selectByPrimaryKey(outAddress);
+                    if (address == null) {
+                        continue;
+                    }
+
+                    String addressType = address.getType();
+                    if (addressType.equals(EAddressType.DEFAULT.getCode())) {
+
+                        BTCDefaultUTXO spendBtcutxo = new BTCDefaultUTXO();
+                        spendBtcutxo.setTxid(vinUTXO.getTxid());
+                        spendBtcutxo.setVout(vinUTXO.getVout());
+                        defaultBtcSpendedTXOList.add((BTCDefaultUTXO) spendBtcutxo);
+
+                    } else if (addressType.equals(EAddressType.WITHDRAW.getCode())) {
+
+                        BTCWithdrawUTXO btcutxo = new BTCWithdrawUTXO();
+                        btcutxo.setTxid(vinUTXO.getTxid());
+                        btcutxo.setVout(vinUTXO.getVout());
+                        withdrawBtcSpendedUTXOList.add(btcutxo);
+
+                    }
+
+                }
+
+
+                //遍历输出
+                for (BTCVoutUTXO voutUTXO : originalTx.getVout()) {
+
+                    List<String> addressList = voutUTXO.getScriptPubKey().getAddresses();
+                    if (addressList == null || addressList.size() == 0) {
+                        continue;
+                    }
+
+                    String outToAddress = addressList.get(0);
+                    BTCAddress address = this.addressMapper.selectByPrimaryKey(outToAddress);
+
+                    if (address == null) {
+                        continue;
+                    }
+
+                    String addressType = address.getType();
+                    if (addressType.equals(EAddressType.DEFAULT.getCode())) {
+//普通utxo收集
+                        BTCDefaultUTXO btcutxo = this.convertOut(voutUTXO, originalTx.getTxid(), originalTx.getBlockheight(), EDefaultUTXOStatus.UN_COLLECTION.getCode());
+                        defaultBtcUTXOList.add(btcutxo);
+
+                    } else if (addressType.equals(EAddressType.WITHDRAW.getCode())) {
+//提现utxo收集
+                        // 提现暂未处理
+
+                    }
+
+                }
+
+
+            }
+
+            pageNum += 1;
+
+        }
+
+        //变更 输入状态,为已归集
+        for (BTCDefaultUTXO utxo : defaultBtcSpendedTXOList) {
+            System.out.println("这些utxo被消费了");
+            BTCDefaultUTXO updateBtcDefaultUTXO = new BTCDefaultUTXO();
+            updateBtcDefaultUTXO.setTxid(utxo.getTxid());
+            updateBtcDefaultUTXO.setVout(utxo.getVout());
+            updateBtcDefaultUTXO.setStatus(EDefaultUTXOStatus.COLLECTION_ED.getCode());
+            this.defaultUTXOMapper.updateByPrimaryKeySelective(updateBtcDefaultUTXO);
+
+        }
+
+        if (withdrawBtcSpendedUTXOList.size() > 0) {
+
+            withdrawBtcSpendedUTXOList.forEach(utxo -> {
+
+                BTCWithdrawUTXO updateBtcWithdrawUTXO = new BTCWithdrawUTXO();
+                updateBtcWithdrawUTXO.setTxid(utxo.getTxid());
+                updateBtcWithdrawUTXO.setVout(utxo.getVout());
+                updateBtcWithdrawUTXO.setStatus(EWithdrawUTXOStatus.USE_ED.getCode());
+                this.withdrawUTXOMapper.updateByPrimaryKeySelective(updateBtcWithdrawUTXO);
+
+
+            });
+        }
+
+
+        //存储 utxo
+        if (defaultBtcUTXOList.size() > 0) {
+            System.out.println("找到了相关utxo");
+            this.defaultUTXOMapper.insertBatch(defaultBtcUTXOList);
+        }
+
+        if (withdrawBtcUTXOList.size() > 0) {
+            this.withdrawUTXOMapper.insertBatch(withdrawBtcUTXOList);
+        }
+
+        //改变遍历的区块高度
+        currentBlockHeight += 1;
 
     }
 
@@ -281,7 +330,7 @@ public class BTCService implements IBTCService {
         String statusCode = EDefaultUTXOStatus.UN_COLLECTION.getCode();
         BigDecimal count = this.defaultUTXOMapper.selectCoinCount(statusCode);
 
-        if (count.compareTo(min) < 0) {
+        if (count.compareTo(min) <= 0) {
             //不符合归集条件
             return null;
 
@@ -429,9 +478,11 @@ public class BTCService implements IBTCService {
 
     }
 
-    private String blockUrl(Long blockHeight) {
-        String requestUrl = this.baseUrl() + "/block-height/" + blockHeight + "?format=json";
-        return requestUrl;
+    private String blockUrl(Long blockHeight, Integer pageNum) {
+
+        String blockHassh = this.blockHash(blockHeight);
+        return "https://testnet.blockexplorer.com/api/txs/?block=" + blockHassh + "&pageNum=" + pageNum;
+
     }
 
     private String broadcastRawTxUrl() {
@@ -451,12 +502,14 @@ public class BTCService implements IBTCService {
         return "https://testnet.blockchain.info";
     }
 
-    private BTCDefaultUTXO convertOut(BTCOut btcOut, String txid, Long blockHeight, String status) {
+    private BTCDefaultUTXO convertOut(BTCVoutUTXO btcOut, String txid, Long blockHeight, String status) {
+
+        BTCScriptPubKey scriptPubKey = btcOut.getScriptPubKey();
 
         BTCDefaultUTXO btcutxo = new BTCDefaultUTXO();
-        btcutxo.setAddress(btcOut.getAddr());
+        btcutxo.setAddress(scriptPubKey.getAddresses().get(0));
         btcutxo.setCount(btcOut.getValue());
-        btcutxo.setScriptPubKey(btcOut.getScript());
+        btcutxo.setScriptPubKey(scriptPubKey.getHex());
         btcutxo.setTxid(txid);
         btcutxo.setVout(btcOut.getN());
         btcutxo.setSyncTime(new Date());
@@ -464,6 +517,5 @@ public class BTCService implements IBTCService {
         btcutxo.setStatus(status);
         return btcutxo;
     }
-
 
 }

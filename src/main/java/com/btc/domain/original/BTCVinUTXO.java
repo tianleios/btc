@@ -7,6 +7,25 @@ public class BTCVinUTXO {
     private Integer vout;
     private String txid;
 
+    private String coinbase;
+    private String addr;
+
+
+    public String getAddr() {
+        return addr;
+    }
+
+    public void setAddr(String addr) {
+        this.addr = addr;
+    }
+
+    public String getCoinbase() {
+        return coinbase;
+    }
+
+    public void setCoinbase(String coinbase) {
+        this.coinbase = coinbase;
+    }
 
     public Integer getN() {
         return n;

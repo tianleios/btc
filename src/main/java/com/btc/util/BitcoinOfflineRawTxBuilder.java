@@ -268,20 +268,22 @@ public class BitcoinOfflineRawTxBuilder {
         //以下进行测试
         // 代码运行机器要有，一个测试测试网路在跑 regTest
         // in
-        OfflineTxInput offlineTxInput = new OfflineTxInput("27e01a5e61e52e27c3481563d04c6c980c72559f02a0b887f5b176229bc39b13",
+        OfflineTxInput offlineTxInput = new OfflineTxInput("17947a8e5fbd0548d2f0e1c56a5200f91d3ba30cfeb0b6892f9bac956d2d5190",
                 0,
-                "76a9144903332b1ee2b8d4055af4522bb87bb03f095d7988ac",
-                "cUt9mB4HGXmE69qo5DmiP3CzuGezu3NsLfzMRQFfWXcdogaV62MK"
+                "76a9144c2d06668aa0fc3ceef26b51749f5fcb857a646088ac",
+                "cRg6dQNCGKZsmyccjTUtv95M4yat5QYbCxrgFWVYBgjSHKuahJwK"
         );
 
 
         //out
-        OfflineTxOutput offlineTxOutput1 = new OfflineTxOutput("n22qbkmhfip9Ks5ehxZqCT8CHR23FDw4ka", BigDecimal.valueOf(0.15));
+        OfflineTxOutput offlineTxOutput1 = new OfflineTxOutput("n22qbkmhfip9Ks5ehxZqCT8CHR23FDw4ka", BigDecimal.valueOf(0.6));
 
-        OfflineTxOutput offlineTxOutput2 = new OfflineTxOutput("myc1x6qKivfuxqcGovfMXhbmZWbBrx5TKz", BigDecimal.valueOf(0.25));
+        OfflineTxOutput offlineTxOutput2 = new OfflineTxOutput("mktt7K5TH6aieW2xUV6fBjJyEbxPs6QjgG", BigDecimal.valueOf(0.7));
 
-        //找零
-        OfflineTxOutput offlineTxOutputling = new OfflineTxOutput("mnB1TPWm7vtaqycZGXBkjwtkVq6Vzb6Nci", BigDecimal.valueOf(0.39));
+        OfflineTxOutput offlineTxOutput3 = new OfflineTxOutput("myc1x6qKivfuxqcGovfMXhbmZWbBrx5TKz", BigDecimal.valueOf(0.8));
+
+//        //找零
+//        OfflineTxOutput offlineTxOutputling = new OfflineTxOutput("mnB1TPWm7vtaqycZGXBkjwtkVq6Vzb6Nci", BigDecimal.valueOf(0.39));
 
         //
         BitcoinOfflineRawTxBuilder bitcoinOfflineRawTxBuilder = new BitcoinOfflineRawTxBuilder();
@@ -289,7 +291,7 @@ public class BitcoinOfflineRawTxBuilder {
 
         bitcoinOfflineRawTxBuilder.out(offlineTxOutput1);
         bitcoinOfflineRawTxBuilder.out(offlineTxOutput2);
-        bitcoinOfflineRawTxBuilder.out(offlineTxOutputling);
+        bitcoinOfflineRawTxBuilder.out(offlineTxOutput3);
 
 
         try {

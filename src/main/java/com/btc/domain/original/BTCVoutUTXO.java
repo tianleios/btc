@@ -1,11 +1,25 @@
 package com.btc.domain.original;
 
+import java.math.BigDecimal;
+
 public class BTCVoutUTXO {
 
     private Integer n;
     private Integer vout;
     private String txid;
     private BTCScriptPubKey scriptPubKey;
+    private BigDecimal value;
+
+
+    public BigDecimal getValue() {
+        return value;
+    }
+
+    public void setValue(BigDecimal value) {
+        // 转化为没有小数
+        this.value = value.multiply(BigDecimal.TEN.pow(8)).setScale(0,BigDecimal.ROUND_DOWN);
+//        this.value = value;
+    }
 
     public Integer getN() {
         return n;

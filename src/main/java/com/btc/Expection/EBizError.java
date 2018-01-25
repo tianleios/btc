@@ -10,7 +10,9 @@ public enum EBizError {
     UTXO_INSERT_ERROR("1200","交易插入失败"),
     TX_FEE_ERROR("1201","拉取手续费失败"),
 
-    UTXO_COLLECTION_ERROR("1300","归集失败");
+    UTXO_COLLECTION_ERROR("1300","归集失败"),
+
+    BLOCK_GET_ERROR("1400","获取区块数据失败");
 
 
     private String code;

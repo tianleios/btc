@@ -2,15 +2,14 @@ package com.btc.controller;
 
 //import com.tianlei.common.Response;
 
+import com.btc.domain.BTCDefaultUTXO;
 import com.btc.service.IBTCService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,6 +45,14 @@ public class BTCController {
         Map map = new HashMap(1);
         map.put("txid", txid);
         return map;
+
+    }
+
+    @GetMapping("utxos/{status}")
+    @ResponseBody
+    public List<BTCDefaultUTXO> utxoList(@PathVariable("status") String status){
+
+        return this.btcService.selectUTXOList(status);
 
     }
 

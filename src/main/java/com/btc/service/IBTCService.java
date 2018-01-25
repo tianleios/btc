@@ -15,6 +15,8 @@ public interface IBTCService {
     */
     String address(boolean isTest);
 
+    List<BTCDefaultUTXO> selectUTXOList(String status);
+
     void storeDefaultUTXO(List<BTCDefaultUTXO> utxoList);
 
     void storeWithdrawUTXO(List<BTCWithdrawUTXO> utxoList);
