@@ -3,6 +3,7 @@ package com.btc.service;
 import com.btc.domain.BTCDefaultUTXO;
 import com.btc.domain.BTCWithdrawUTXO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -22,5 +23,10 @@ public interface IBTCService {
     void storeWithdrawUTXO(List<BTCWithdrawUTXO> utxoList);
 
     String collection();
+
+    void handleWithdraw();
+
+    Boolean withdraw(String toAddress, BigDecimal count);
+
 
 }

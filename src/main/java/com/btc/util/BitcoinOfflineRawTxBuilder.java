@@ -229,6 +229,15 @@ public class BitcoinOfflineRawTxBuilder {
     public static void main(String[] args) {
 
         testnet();
+
+
+    }
+
+    /**
+     * 该方法可以测试签名的结果是否正确，如果修改了签名的相关代码，可以调用该方法大概验证。修改后结果是否正确
+     */
+    private static void testSign() {
+
         //以下进行测试
         // 代码运行机器要有，一个测试测试网路在跑 regTest
         // in
@@ -260,27 +269,27 @@ public class BitcoinOfflineRawTxBuilder {
             System.out.print("离线签名失败");
 
         }
-
     }
+
 
     private static void testnet() {
 
         //以下进行测试
         // 代码运行机器要有，一个测试测试网路在跑 regTest
         // in
-        OfflineTxInput offlineTxInput = new OfflineTxInput("17947a8e5fbd0548d2f0e1c56a5200f91d3ba30cfeb0b6892f9bac956d2d5190",
+        OfflineTxInput offlineTxInput = new OfflineTxInput("b7ff463c63b5001560950b308e926980c52af6cbed06981af984955f8448fec9",
                 0,
-                "76a9144c2d06668aa0fc3ceef26b51749f5fcb857a646088ac",
-                "cRg6dQNCGKZsmyccjTUtv95M4yat5QYbCxrgFWVYBgjSHKuahJwK"
+                "76a9144903332b1ee2b8d4055af4522bb87bb03f095d7988ac",
+                "cUt9mB4HGXmE69qo5DmiP3CzuGezu3NsLfzMRQFfWXcdogaV62MK"
         );
 
 
         //out
-        OfflineTxOutput offlineTxOutput1 = new OfflineTxOutput("n22qbkmhfip9Ks5ehxZqCT8CHR23FDw4ka", BigDecimal.valueOf(0.6));
+        OfflineTxOutput offlineTxOutput1 = new OfflineTxOutput("mnTjb2QnJrTtssXan9WFwheERn3VpEs9YU", BigDecimal.valueOf(0.82892903));
 
-        OfflineTxOutput offlineTxOutput2 = new OfflineTxOutput("mktt7K5TH6aieW2xUV6fBjJyEbxPs6QjgG", BigDecimal.valueOf(0.7));
-
-        OfflineTxOutput offlineTxOutput3 = new OfflineTxOutput("myc1x6qKivfuxqcGovfMXhbmZWbBrx5TKz", BigDecimal.valueOf(0.8));
+//        OfflineTxOutput offlineTxOutput2 = new OfflineTxOutput("mktt7K5TH6aieW2xUV6fBjJyEbxPs6QjgG", BigDecimal.valueOf(0.7));
+//
+//        OfflineTxOutput offlineTxOutput3 = new OfflineTxOutput("myc1x6qKivfuxqcGovfMXhbmZWbBrx5TKz", BigDecimal.valueOf(0.8));
 
 //        //找零
 //        OfflineTxOutput offlineTxOutputling = new OfflineTxOutput("mnB1TPWm7vtaqycZGXBkjwtkVq6Vzb6Nci", BigDecimal.valueOf(0.39));
@@ -288,11 +297,9 @@ public class BitcoinOfflineRawTxBuilder {
         //
         BitcoinOfflineRawTxBuilder bitcoinOfflineRawTxBuilder = new BitcoinOfflineRawTxBuilder();
         bitcoinOfflineRawTxBuilder.in(offlineTxInput);
-
         bitcoinOfflineRawTxBuilder.out(offlineTxOutput1);
-        bitcoinOfflineRawTxBuilder.out(offlineTxOutput2);
-        bitcoinOfflineRawTxBuilder.out(offlineTxOutput3);
-
+//        bitcoinOfflineRawTxBuilder.out(offlineTxOutput2);
+//        bitcoinOfflineRawTxBuilder.out(offlineTxOutput3);
 
         try {
 

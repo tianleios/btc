@@ -12,11 +12,22 @@ public interface BTCDefaultUTXOMapper {
 
 //    int updateUTXOStatus(@Param("txId") String txId, @Param("vout") Integer vout, @Param("toStatus") String toStatus);
 
-
-    /* 获的utxo数量 */
+    /* 获的utxo 量 */
     BigDecimal selectCoinCount(String status);
 
-    List<BTCDefaultUTXO> selectList(@Param("status") String status,@Param("start") int start, @Param("limit") int limit);
+    List<BTCDefaultUTXO> selectList(@Param("status") String status,
+                                    @Param("start") int start,
+                                    @Param("limit") int limit);
+
+    /**
+     *
+     * @param start
+     * @param limit
+     * @return
+     */
+    List<BTCDefaultUTXO> selectSuspiciousUTXOList(@Param("start") int start,
+                                                  @Param("limit") int limit);
+
 
 //    int insert(BTCDefaultUTXO record);
 //
@@ -24,7 +35,7 @@ public interface BTCDefaultUTXOMapper {
 //
 //
     int updateByPrimaryKeySelective(BTCDefaultUTXO record);
-//
+
 //    int updateByPrimaryKeyWithBLOBs(BTCDefaultUTXO record);
 //
 //    int updateByPrimaryKey(BTCDefaultUTXO record);

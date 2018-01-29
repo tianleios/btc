@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.btc.dao.BTCWithdrawMapper">
+    <resultMap id="BaseResultMap" type="com.btc.domain.BTCWithdraw">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="to_address" jdbcType="CHAR" property="toAddress"/>
+        <result column="count" jdbcType="DECIMAL" property="count"/>
+        <result column="apply_datetime" jdbcType="TIMESTAMP" property="applyDatetime"/>
+        <result column="update_datetime" jdbcType="TIMESTAMP" property="updateDatetime"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="withdraw_txid" jdbcType="CHAR" property="withdrawTxid"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, to_address, count, apply_datetime, update_datetime, status, withdraw_txid
+    </sql>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM btc_withdraw WHERE `status`=#{status}, limit #{start},#{limit}
+    </select>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from btc_withdraw
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        DELETE FROM btc_withdraw
+        WHERE id = #{id,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="com.btc.domain.BTCWithdraw">
+        INSERT INTO btc_withdraw (id, to_address, count,
+                                  apply_datetime, update_datetime, status,
+                                  withdraw_txid)
+        VALUES (#{id,jdbcType=INTEGER}, #{toAddress,jdbcType=CHAR}, #{count,jdbcType=DECIMAL},
+                #{applyDatetime,jdbcType=TIMESTAMP}, #{updateDatetime,jdbcType=TIMESTAMP}, #{status,jdbcType=VARCHAR},
+                #{withdrawTxid,jdbcType=CHAR})
+    </insert>
+    <insert id="insertSelective" parameterType="com.btc.domain.BTCWithdraw">
+        insert into btc_withdraw
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="toAddress != null">
+                to_address,
+            </if>
+            <if test="count != null">
+                count,
+            </if>
+            <if test="applyDatetime != null">
+                apply_datetime,
+            </if>
+            <if test="updateDatetime != null">
+                update_datetime,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="withdrawTxid != null">
+                withdraw_txid,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="toAddress != null">
+                #{toAddress,jdbcType=CHAR},
+            </if>
+            <if test="count != null">
+                #{count,jdbcType=DECIMAL},
+            </if>
+            <if test="applyDatetime != null">
+                #{applyDatetime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateDatetime != null">
+                #{updateDatetime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="status != null">
+                #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="withdrawTxid != null">
+                #{withdrawTxid,jdbcType=CHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.btc.domain.BTCWithdraw">
+        update btc_withdraw
+        <set>
+            <if test="toAddress != null">
+                to_address = #{toAddress,jdbcType=CHAR},
+            </if>
+            <if test="count != null">
+                count = #{count,jdbcType=DECIMAL},
+            </if>
+            <if test="applyDatetime != null">
+                apply_datetime = #{applyDatetime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateDatetime != null">
+                update_datetime = #{updateDatetime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="withdrawTxid != null">
+                withdraw_txid = #{withdrawTxid,jdbcType=CHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.btc.domain.BTCWithdraw">
+        UPDATE btc_withdraw
+        SET to_address      = #{toAddress,jdbcType=CHAR},
+            count           = #{count,jdbcType=DECIMAL},
+            apply_datetime  = #{applyDatetime,jdbcType=TIMESTAMP},
+            update_datetime = #{updateDatetime,jdbcType=TIMESTAMP},
+            status          = #{status,jdbcType=VARCHAR},
+            withdraw_txid   = #{withdrawTxid,jdbcType=CHAR}
+        WHERE id = #{id,jdbcType=INTEGER}
+    </update>
+</mapper>

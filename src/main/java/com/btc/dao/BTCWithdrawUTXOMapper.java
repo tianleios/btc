@@ -3,6 +3,7 @@ package com.btc.dao;
 import com.btc.domain.BTCWithdrawUTXO;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -13,5 +14,8 @@ public interface BTCWithdrawUTXOMapper {
     int insertBatch(List<BTCWithdrawUTXO> withdrawUTXOList);
     int updateUTXOToUsed(@Param("txId") String txId,@Param("vout") Integer vout);
     int updateByPrimaryKeySelective(BTCWithdrawUTXO record);
+
+    BigDecimal selectCoinCount(String status);
+
 
 }

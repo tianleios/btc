@@ -19,6 +19,7 @@ CREATE TABLE `btc_default_utxo` (
   `block_height` INT NOT NULL ,
   `status` VARCHAR(4) NOT NULL ,
   `spend_txid` CHAR(64) NOT NULL,
+  `collection_time` DATETIME NULL COMMENT '归集时间',
 
   PRIMARY KEY (`txid`, `vout`),
   KEY `address`(address),

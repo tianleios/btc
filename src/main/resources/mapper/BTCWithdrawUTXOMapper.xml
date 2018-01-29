@@ -2,17 +2,17 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.btc.dao.BTCWithdrawUTXOMapper">
     <resultMap id="BaseResultMap" type="com.btc.domain.BTCWithdrawUTXO">
-        <id column="txid" jdbcType="CHAR" property="txid" />
-        <id column="vout" jdbcType="INTEGER" property="vout" />
-        <result column="count" jdbcType="DECIMAL" property="count" />
-        <result column="address" jdbcType="CHAR" property="address" />
-        <result column="sync_time" jdbcType="TIMESTAMP" property="syncTime" />
-        <result column="block_height" jdbcType="INTEGER" property="blockHeight" />
-        <result column="status" jdbcType="VARCHAR" property="status" />
-        <result column="withdra_twxid" jdbcType="CHAR" property="withdrawTxid" />
+        <id column="txid" jdbcType="CHAR" property="txid"/>
+        <id column="vout" jdbcType="INTEGER" property="vout"/>
+        <result column="count" jdbcType="DECIMAL" property="count"/>
+        <result column="address" jdbcType="CHAR" property="address"/>
+        <result column="sync_time" jdbcType="TIMESTAMP" property="syncTime"/>
+        <result column="block_height" jdbcType="INTEGER" property="blockHeight"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="withdra_twxid" jdbcType="CHAR" property="withdrawTxid"/>
     </resultMap>
     <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.btc.domain.BTCWithdrawUTXO">
-        <result column="script_pub_key" jdbcType="LONGVARCHAR" property="scriptPubKey" />
+        <result column="script_pub_key" jdbcType="LONGVARCHAR" property="scriptPubKey"/>
     </resultMap>
     <sql id="Base_Column_List">
         txid, vout, count, address, sync_time, block_height, status, withdraw_txid
@@ -21,7 +21,11 @@
         script_pub_key
     </sql>
 
-
+    <select id="selectCoinCount" resultType="java.math.BigDecimal">
+        SELECT IFNULL(sum(`count`), 0)
+        FROM btc_withdraw_utxo
+        WHERE `status` = #{status}
+    </select>
 
     <insert id="insertBatch" parameterType="List">
 
@@ -30,7 +34,7 @@
         status, spend_txid, script_pub_key
         )
         VALUES
-        <foreach collection="withdrawUTXOList" item="utxo" open="(" separator="," close=")" >
+        <foreach collection="withdrawUTXOList" item="utxo" open="(" separator="," close=")">
             #{utxo.txid}, #{utxo.vout}, #{utxo.count},
             #{utxo.address}, #{utxo.syncTime}, #{utxo.blockHeight},
             #{utxo.status}, #{utxo.scriptPubKey}
@@ -39,7 +43,9 @@
     </insert>
 
     <update id="updateUTXOToUsed">
-        UPDATE `btc_withdraw_utxo` SET `status` = '2' WHERE txid = #{txId} and vout = #{vout}
+        UPDATE `btc_withdraw_utxo`
+        SET `status` = '2'
+        WHERE txid = #{txId} AND vout = #{vout}
     </update>
 
 
@@ -58,7 +64,7 @@
             <if test="blockHeight != null and blockHeight != '' ">
                 block_height = #{blockHeight,jdbcType=INTEGER},
             </if>
-            <if test="status != null and status != '' " >
+            <if test="status != null and status != '' ">
                 status = #{status,jdbcType=VARCHAR},
             </if>
             <if test="spendTxid != null and spendTxid != '' ">

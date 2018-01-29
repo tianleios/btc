@@ -930,65 +930,68 @@
     <table id="235" parent="2" name="btc_default_utxo">
       <Engine>InnoDB</Engine>
     </table>
-    <table id="236" parent="2" name="btc_withdraw_utxo">
+    <table id="236" parent="2" name="btc_withdraw">
       <Engine>InnoDB</Engine>
     </table>
-    <column id="237" parent="234" name="address">
+    <table id="237" parent="2" name="btc_withdraw_utxo">
+      <Engine>InnoDB</Engine>
+    </table>
+    <column id="238" parent="234" name="address">
       <Position>1</Position>
       <Comment>地址</Comment>
       <DataType>char(36)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="238" parent="234" name="privatekey">
+    <column id="239" parent="234" name="privatekey">
       <Position>2</Position>
       <DataType>varchar(64)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="239" parent="234" name="type">
+    <column id="240" parent="234" name="type">
       <Position>3</Position>
       <DataType>varchar(4)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <key id="240" parent="234" name="PRIMARY">
+    <key id="241" parent="234" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>address</ColNames>
       <Primary>1</Primary>
     </key>
-    <column id="241" parent="235" name="txid">
+    <column id="242" parent="235" name="txid">
       <Position>1</Position>
       <Comment>交易id</Comment>
       <DataType>char(64)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="242" parent="235" name="vout">
+    <column id="243" parent="235" name="vout">
       <Position>2</Position>
       <DataType>int(11)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="243" parent="235" name="count">
+    <column id="244" parent="235" name="count">
       <Position>3</Position>
       <DataType>decimal(64)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="244" parent="235" name="script_pub_key">
+    <column id="245" parent="235" name="script_pub_key">
       <Position>4</Position>
       <DataType>text|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="245" parent="235" name="address">
+    <column id="246" parent="235" name="address">
       <Position>5</Position>
       <DataType>char(34)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="246" parent="235" name="sync_time">
+    <column id="247" parent="235" name="sync_time">
       <Position>6</Position>
       <DataType>timestamp|0</DataType>
       <NotNull>1</NotNull>
@@ -996,67 +999,127 @@
       <ColumnKind>normal</ColumnKind>
       <OnUpdate>CURRENT_TIMESTAMP</OnUpdate>
     </column>
-    <column id="247" parent="235" name="block_height">
+    <column id="248" parent="235" name="block_height">
       <Position>7</Position>
       <DataType>int(11)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="248" parent="235" name="status">
+    <column id="249" parent="235" name="status">
       <Position>8</Position>
       <DataType>varchar(4)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="249" parent="235" name="spend_txid">
+    <column id="250" parent="235" name="spend_txid">
       <Position>9</Position>
       <DataType>char(64)|0</DataType>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <index id="250" parent="235" name="address">
+    <column id="251" parent="235" name="collection_time">
+      <Position>10</Position>
+      <DataType>datetime|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <index id="252" parent="235" name="address">
       <ColNames>address</ColNames>
     </index>
-    <index id="251" parent="235" name="status">
+    <index id="253" parent="235" name="status">
       <ColNames>status</ColNames>
     </index>
-    <key id="252" parent="235" name="PRIMARY">
+    <key id="254" parent="235" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>txid
 vout</ColNames>
       <Primary>1</Primary>
     </key>
-    <column id="253" parent="236" name="txid">
+    <column id="255" parent="236" name="id">
+      <Position>1</Position>
+      <DataType>int(11)|0</DataType>
+      <NotNull>1</NotNull>
+      <SequenceIdentity>1</SequenceIdentity>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="256" parent="236" name="to_address">
+      <Position>2</Position>
+      <DataType>char(34)|0</DataType>
+      <NotNull>1</NotNull>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="257" parent="236" name="count">
+      <Position>3</Position>
+      <DataType>decimal(64)|0</DataType>
+      <NotNull>1</NotNull>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="258" parent="236" name="apply_datetime">
+      <Position>4</Position>
+      <DataType>datetime|0</DataType>
+      <NotNull>1</NotNull>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="259" parent="236" name="update_datetime">
+      <Position>5</Position>
+      <DataType>datetime|0</DataType>
+      <NotNull>1</NotNull>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="260" parent="236" name="status">
+      <Position>6</Position>
+      <DataType>varchar(4)|0</DataType>
+      <NotNull>1</NotNull>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="261" parent="236" name="withdraw_txid">
+      <Position>7</Position>
+      <DataType>char(64)|0</DataType>
+      <NotNull>1</NotNull>
+      <DefaultExpression>&apos;&apos;</DefaultExpression>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <index id="262" parent="236" name="status_key">
+      <ColNames>status</ColNames>
+    </index>
+    <index id="263" parent="236" name="withdraw_txid_key">
+      <ColNames>withdraw_txid</ColNames>
+    </index>
+    <key id="264" parent="236" name="PRIMARY">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="265" parent="237" name="txid">
       <Position>1</Position>
       <Comment>交易id</Comment>
       <DataType>char(64)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="254" parent="236" name="vout">
+    <column id="266" parent="237" name="vout">
       <Position>2</Position>
       <DataType>int(11)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="255" parent="236" name="count">
+    <column id="267" parent="237" name="count">
       <Position>3</Position>
       <DataType>decimal(64)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="256" parent="236" name="script_pub_key">
+    <column id="268" parent="237" name="script_pub_key">
       <Position>4</Position>
       <DataType>text|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="257" parent="236" name="address">
+    <column id="269" parent="237" name="address">
       <Position>5</Position>
       <DataType>char(34)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="258" parent="236" name="sync_time">
+    <column id="270" parent="237" name="sync_time">
       <Position>6</Position>
       <DataType>timestamp|0</DataType>
       <NotNull>1</NotNull>
@@ -1064,31 +1127,31 @@ vout</ColNames>
       <ColumnKind>normal</ColumnKind>
       <OnUpdate>CURRENT_TIMESTAMP</OnUpdate>
     </column>
-    <column id="259" parent="236" name="block_height">
+    <column id="271" parent="237" name="block_height">
       <Position>7</Position>
       <DataType>int(11)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="260" parent="236" name="status">
+    <column id="272" parent="237" name="status">
       <Position>8</Position>
       <DataType>varchar(4)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="261" parent="236" name="withdraw_txid">
+    <column id="273" parent="237" name="withdraw_txid">
       <Position>9</Position>
       <DataType>char(64)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <index id="262" parent="236" name="address">
+    <index id="274" parent="237" name="address">
       <ColNames>address</ColNames>
     </index>
-    <index id="263" parent="236" name="status">
+    <index id="275" parent="237" name="status">
       <ColNames>status</ColNames>
     </index>
-    <key id="264" parent="236" name="PRIMARY">
+    <key id="276" parent="237" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>txid
 vout</ColNames>

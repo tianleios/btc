@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.btc.dao.BTCDefaultUTXOMapper">
+
     <resultMap id="BaseResultMap" type="com.btc.domain.BTCDefaultUTXO">
         <id column="txid" jdbcType="CHAR" property="txid"/>
         <id column="vout" jdbcType="INTEGER" property="vout"/>
@@ -11,6 +12,7 @@
         <result column="status" jdbcType="VARCHAR" property="status"/>
         <result column="spend_txid" jdbcType="CHAR" property="spendTxid"/>
     </resultMap>
+
     <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.btc.domain.BTCDefaultUTXO">
         <result column="script_pub_key" jdbcType="LONGVARCHAR" property="scriptPubKey"/>
     </resultMap>
@@ -18,10 +20,10 @@
     <sql id="Base_Column_List">
         txid, vout, count, address, sync_time, block_height, status, spend_txid
     </sql>
+
     <sql id="Blob_Column_List">
         script_pub_key
     </sql>
-
 
     <insert id="insertBatch" parameterType="List">
 
@@ -30,7 +32,7 @@
         `status`, script_pub_key
         )
         VALUES
-        <foreach collection="list" item="utxo" separator="," >
+        <foreach collection="list" item="utxo" separator=",">
             ( #{utxo.txid}, #{utxo.vout}, #{utxo.count},
             #{utxo.address}, #{utxo.syncTime}, #{utxo.blockHeight},
             #{utxo.status}, #{utxo.scriptPubKey})
@@ -38,9 +40,9 @@
     </insert>
 
     <!--<update id="updateUTXOStatus" >-->
-        <!--UPDATE `btc_default_utxo`-->
-        <!--SET `status` = #{toStatus}-->
-        <!--WHERE txid = #{txid} AND vout = #{vout}-->
+    <!--UPDATE `btc_default_utxo`-->
+    <!--SET `status` = #{toStatus}-->
+    <!--WHERE txid = #{txid} AND vout = #{vout}-->
     <!--</update>-->
 
 
@@ -55,18 +57,27 @@
         and vout = #{vout,jdbcType=INTEGER}
     </select>
 
+    <!-- 查询可疑 的utxo -->
+    <select id="selectSuspiciousUTXOList" resultMap="BaseResultMap">
+
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM btc_default_utxo WHERE status = '1' AND TIMESTAMPDIFF(HOUR,collection_time,now()) > 12 LIMIT #{start},#{limit}
+
+    </select>
 
     <select id="selectCoinCount" resultType="java.math.BigDecimal">
-        SELECT IFNULL(sum(`count`),0)
+        SELECT IFNULL(sum(`count`), 0)
         FROM btc_default_utxo
         WHERE `status` = #{status}
     </select>
 
-    <select id="selectList"  resultMap="ResultMapWithBLOBs" >
+    <select id="selectList" resultMap="ResultMapWithBLOBs">
 
-        SELECT
-        *
-        FROM btc_default_utxo where `status` = #{status} limit #{start},#{limit}
+        SELECT *
+        FROM btc_default_utxo
+        WHERE `status` = #{status}
+        LIMIT #{start}, #{limit}
 
     </select>
 
@@ -149,6 +160,7 @@
             </if>
         </trim>
     </insert>
+
     <update id="updateByPrimaryKeySelective" parameterType="com.btc.domain.BTCDefaultUTXO">
         update btc_default_utxo
         <set>
@@ -164,7 +176,7 @@
             <if test="blockHeight != null and blockHeight != '' ">
                 block_height = #{blockHeight,jdbcType=INTEGER},
             </if>
-            <if test="status != null and status != '' " >
+            <if test="status != null and status != '' ">
                 `status` = #{status,jdbcType=VARCHAR},
             </if>
             <if test="spendTxid != null and spendTxid != '' ">
@@ -177,18 +189,7 @@
         where txid = #{txid,jdbcType=CHAR}
         and vout = #{vout,jdbcType=INTEGER}
     </update>
-    <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.btc.domain.BTCDefaultUTXO">
-        UPDATE btc_default_utxo
-        SET count          = #{count,jdbcType=DECIMAL},
-            address        = #{address,jdbcType=CHAR},
-            sync_time      = #{syncTime,jdbcType=TIMESTAMP},
-            block_height   = #{blockHeight,jdbcType=INTEGER},
-            status         = #{status,jdbcType=VARCHAR},
-            spend_txid     = #{spendTxid,jdbcType=CHAR},
-            script_pub_key = #{scriptPubKey,jdbcType=LONGVARCHAR}
-        WHERE txid = #{txid,jdbcType=CHAR}
-              AND vout = #{vout,jdbcType=INTEGER}
-    </update>
+
     <update id="updateByPrimaryKey" parameterType="com.btc.domain.BTCDefaultUTXO">
         UPDATE btc_default_utxo
         SET count        = #{count,jdbcType=DECIMAL},
@@ -200,4 +201,5 @@
         WHERE txid = #{txid,jdbcType=CHAR}
               AND vout = #{vout,jdbcType=INTEGER}
     </update>
+
 </mapper>
