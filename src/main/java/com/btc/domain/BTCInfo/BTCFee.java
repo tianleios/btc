@@ -5,7 +5,12 @@ package com.btc.domain.BTCInfo;
  */
 public class BTCFee {
 
-//    {"fastestFee":250,"halfHourFee":240,"hourFee":130}
+    /**
+     *  {"fastestFee":250,"halfHourFee":240,"hourFee":130}
+     * 1.fastestFee: The lowest fee (in satoshis per byte) that will currently result in the fastest transaction    *   confirmations (usually 0 to 1 block delay).
+     * 2.halfHourFee: The lowest fee (in satoshis per byte) that will confirm transactions within half an hour      *   (with 90% probability).
+     * 3.hourFee: The lowest fee (in satoshis per byte) that will confirm transactions within an hour (with 90%     * probability).
+     */
     private Integer fastestFee;
     private Integer halfHourFee;
     private Integer hourFee;

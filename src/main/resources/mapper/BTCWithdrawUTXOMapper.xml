@@ -27,6 +27,15 @@
         WHERE `status` = #{status}
     </select>
 
+    <select id="selectListCanUseWithdraw" resultType="java.util.List" resultMap="BaseResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM btc_withdraw_utxo
+        WHERE status=#{status}
+        limit #{start},#{limit}
+        order by #{orderBy},#{sort}
+    </select>
+
     <insert id="insertBatch" parameterType="List">
 
         insert into btc_withdraw_utxo (txid, vout, count,

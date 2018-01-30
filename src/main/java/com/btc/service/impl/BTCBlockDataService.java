@@ -48,6 +48,8 @@ public class BTCBlockDataService {
 
     }
 
+    private Integer maxFeePerByteCanAccept = 300;
+
     @Nullable
     public BTCOriginalTx queryTxHash(String txid) {
 
@@ -79,8 +81,8 @@ public class BTCBlockDataService {
 
             BTCFee fee = JSON.parseObject(jsonStr, BTCFee.class);
             // 应该读取一个配置值，获取手续费如果大于这个值，就取这个是
-            Integer maxFeePerByte = 300;
-            Integer fastFee = fee.getFastestFee();
+            Integer maxFeePerByte = maxFeePerByteCanAccept;
+            Integer fastFee = fee.getHalfHourFee();
 
             return fastFee > maxFeePerByte ? maxFeePerByte : fastFee;
 
@@ -94,6 +96,7 @@ public class BTCBlockDataService {
 
     /**
      * 返回
+     *
      * @param blockHeight
      * @param pageNum
      * @return
@@ -122,10 +125,19 @@ public class BTCBlockDataService {
 
     }
 
+    public String broadcastRawTxUrl() {
+
+        return this.baseApiURL() + "/tx/send";
+
+    }
+
+    public Integer getMaxFeePerByteCanAccept() {
+        return maxFeePerByteCanAccept;
+    }
+
     //
     private String feeUrl() {
         //        {"fastestFee":250,"halfHourFee":240,"hourFee":130}
-        //
         return "https://bitcoinfees.earn.com/api/v1/fees/recommended";
 
     }
@@ -170,6 +182,5 @@ public class BTCBlockDataService {
         return "https://testnet.blockexplorer.com/api";
 
     }
-
 
 }

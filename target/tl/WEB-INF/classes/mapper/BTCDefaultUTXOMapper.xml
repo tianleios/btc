@@ -11,6 +11,7 @@
         <result column="block_height" jdbcType="INTEGER" property="blockHeight"/>
         <result column="status" jdbcType="VARCHAR" property="status"/>
         <result column="spend_txid" jdbcType="CHAR" property="spendTxid"/>
+        <result column="collection_time" property="collectionTime"/>
     </resultMap>
 
     <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.btc.domain.BTCDefaultUTXO">
@@ -18,7 +19,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        txid, vout, count, address, sync_time, block_height, status, spend_txid
+        txid, vout, count, address, sync_time, block_height, status, spend_txid, collection_time
     </sql>
 
     <sql id="Blob_Column_List">
@@ -61,8 +62,9 @@
     <select id="selectSuspiciousUTXOList" resultMap="BaseResultMap">
 
         SELECT
-            <include refid="Base_Column_List"/>
-        FROM btc_default_utxo WHERE status = '1' AND TIMESTAMPDIFF(HOUR,collection_time,now()) > 12 LIMIT #{start},#{limit}
+        <include refid="Base_Column_List"/>
+        FROM btc_default_utxo WHERE status = '1' AND TIMESTAMPDIFF(HOUR,collection_time,now()) > 12 LIMIT
+        #{start},#{limit}
 
     </select>
 
@@ -81,85 +83,6 @@
 
     </select>
 
-
-    <delete id="deleteByPrimaryKey" parameterType="com.btc.domain.BTCDefaultUTXO">
-        DELETE FROM btc_default_utxo
-        WHERE txid = #{txid,jdbcType=CHAR}
-              AND vout = #{vout,jdbcType=INTEGER}
-    </delete>
-
-    <insert id="insert" parameterType="com.btc.domain.BTCDefaultUTXO">
-        INSERT INTO btc_default_utxo (txid, vout, count,
-                                      address, sync_time, block_height,
-                                      status, spend_txid, script_pub_key
-        )
-        VALUES (#{txid,jdbcType=CHAR}, #{vout,jdbcType=INTEGER}, #{count,jdbcType=DECIMAL},
-                #{address,jdbcType=CHAR}, #{syncTime,jdbcType=TIMESTAMP}, #{blockHeight,jdbcType=INTEGER},
-                #{status,jdbcType=VARCHAR}, #{spendTxid,jdbcType=CHAR}, #{scriptPubKey,jdbcType=LONGVARCHAR}
-        )
-    </insert>
-
-    <insert id="insertSelective" parameterType="com.btc.domain.BTCDefaultUTXO">
-        insert into btc_default_utxo
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="txid != null">
-                txid,
-            </if>
-            <if test="vout != null">
-                vout,
-            </if>
-            <if test="count != null">
-                count,
-            </if>
-            <if test="address != null">
-                address,
-            </if>
-            <if test="syncTime != null">
-                sync_time,
-            </if>
-            <if test="blockHeight != null">
-                block_height,
-            </if>
-            <if test="status != null">
-                status,
-            </if>
-            <if test="spendTxid != null">
-                spend_txid,
-            </if>
-            <if test="scriptPubKey != null">
-                script_pub_key,
-            </if>
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="txid != null">
-                #{txid,jdbcType=CHAR},
-            </if>
-            <if test="vout != null">
-                #{vout,jdbcType=INTEGER},
-            </if>
-            <if test="count != null">
-                #{count,jdbcType=DECIMAL},
-            </if>
-            <if test="address != null">
-                #{address,jdbcType=CHAR},
-            </if>
-            <if test="syncTime != null">
-                #{syncTime,jdbcType=TIMESTAMP},
-            </if>
-            <if test="blockHeight != null">
-                #{blockHeight,jdbcType=INTEGER},
-            </if>
-            <if test="status != null">
-                #{status,jdbcType=VARCHAR},
-            </if>
-            <if test="spendTxid != null">
-                #{spendTxid,jdbcType=CHAR},
-            </if>
-            <if test="scriptPubKey != null">
-                #{scriptPubKey,jdbcType=LONGVARCHAR},
-            </if>
-        </trim>
-    </insert>
 
     <update id="updateByPrimaryKeySelective" parameterType="com.btc.domain.BTCDefaultUTXO">
         update btc_default_utxo
@@ -181,6 +104,9 @@
             </if>
             <if test="spendTxid != null and spendTxid != '' ">
                 spend_txid = #{spendTxid,jdbcType=CHAR},
+            </if>
+            <if test="collectionTime != null and collectionTime != '' ">
+                collection_time = #{collectionTime,jdbcType=CHAR},
             </if>
             <if test="scriptPubKey != null and scriptPubKey != '' ">
                 script_pub_key = #{scriptPubKey,jdbcType=LONGVARCHAR},

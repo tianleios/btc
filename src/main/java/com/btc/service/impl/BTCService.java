@@ -55,11 +55,12 @@ public class BTCService implements IBTCService {
     BTCWithdrawMapper withdrawMapper;
 
     // 1260212 第一次充值地址
-    // 1260264
+    // 1260264 第二次测试的区块
+    // 1260418 最后一次测试的地址
 //  Long currentBlockHeight = Long.valueOf(1260212);
 //  Long.valueOf(1260264);
 //  1260418
-    private static Long currentBlockHeight = Long.valueOf(1260418);
+    private static Long currentBlockHeight = Long.valueOf(1260212);
 
     @Override
     public String address(boolean isTest) {
@@ -90,7 +91,6 @@ public class BTCService implements IBTCService {
         }
 
         return address;
-//        return "123";
     }
 
     @Override
@@ -126,9 +126,8 @@ public class BTCService implements IBTCService {
 
     }
 
-
     @Transactional(rollbackFor = RuntimeException.class)
-//    @Scheduled(cron = "*/10 * * * * ?")
+    @Scheduled(cron = "*/10 * * * * ?")
     public void exploreBlockChain() {
 
         //用于存储 UTXO
@@ -202,7 +201,6 @@ public class BTCService implements IBTCService {
 
                 }
 
-
                 //遍历输出
                 for (BTCVoutUTXO voutUTXO : originalTx.getVout()) {
 
@@ -226,14 +224,12 @@ public class BTCService implements IBTCService {
 
                     } else if (addressType.equals(EAddressType.WITHDRAW.getCode())) {
 //提现utxo收集
-
                         BTCWithdrawUTXO btcutxo = (BTCWithdrawUTXO) this.convertOut(false, voutUTXO, originalTx.getTxid(), originalTx.getBlockheight(), EDefaultUTXOStatus.UN_COLLECTION.getCode());
                         withdrawBtcUTXOList.add(btcutxo);
 
                     }
 
                 }
-
 
             }
 
@@ -295,7 +291,7 @@ public class BTCService implements IBTCService {
         }
 
         //先取最多20条
-        List<BTCDefaultUTXO> UTXOList = this.defaultUTXOMapper.selectList(statusCode, 0, 20);
+        List<BTCDefaultUTXO> UTXOList = this.defaultUTXOMapper.selectList(statusCode, 0, 30);
         if (UTXOList == null || UTXOList.size() <= 0) {
             throw new BizExpection("-2", "无可归金额");
         }
@@ -309,26 +305,25 @@ public class BTCService implements IBTCService {
 
             String txid = utxo.getTxid();
             Integer vout = utxo.getVout();
-
             //统计总额
             totalCount = totalCount.add(utxo.getCount());
-
             BTCAddress btcAddress = this.addressMapper.selectByPrimaryKey(utxo.getAddress());
+
+            //构造签名交易
             OfflineTxInput offlineTxInput = new OfflineTxInput(txid, vout, utxo.getScriptPubKey(), btcAddress.getPrivatekey());
             rawTxBuilder.in(offlineTxInput);
 
         }
 
-        //如何估算手续费，先预先给一个size,然后那这个size进行签名。
-        //对签名的数据进行解码，拿到真实大小，然后进行旷工费的修正
+        //如何估算手续费，先预先给一个size,然后拿这个size进行签名
+        //对签名的数据进行解码，拿到真实大小，然后进行矿工费的修正
         int preSize = BitcoinOfflineRawTxBuilder.calculateSize(rawTxBuilder.getInputs().size(), rawTxBuilder.getOutputs().size());
 
-        int prePerByte = 200;
+        int prePerByte = 150;
 
         //预估的手续费 sat
         int preFee = preSize * prePerByte;
 
-        //预先缴纳的手续费
         BigDecimal preReturnCount = totalCount.subtract(BigDecimal.valueOf(preFee));
 
         //要进行单位转换
@@ -338,7 +333,6 @@ public class BTCService implements IBTCService {
         try {
 
             String signResult = rawTxBuilder.offlineSign();
-            //应该先处理我们的数据库，在进行广播。广播失败就回滚
             //拿到结果进行解码，获取真实Size
             rawTxBuilder.decodeRawTxToGetSizeAndTxid(signResult);
             //decode 成功之后，才能获取下面的数据
@@ -379,7 +373,7 @@ public class BTCService implements IBTCService {
             FormBody formBody = new FormBody.Builder().add("rawtx", lastSignResult).build();
             Request request = new Request.Builder()
                     .post(formBody)
-                    .url(this.broadcastRawTxUrl())
+                    .url(this.blockDataService.broadcastRawTxUrl())
                     .build();
             //
             Call call = okHttpClient.newCall(request);
@@ -408,22 +402,69 @@ public class BTCService implements IBTCService {
     public synchronized void handleWithdraw() {
 
         //1.加载一定量的提现请求
-        List<BTCWithdraw> withdrawList = this.withdrawMapper.selectList(EWithdrawStatus.WILL_HANDLE.getCode(), 0, 10);
+        List<BTCWithdraw> withdrawList = this.withdrawMapper.selectList(EWithdrawStatus.WILL_HANDLE.getCode(), 0, 20);
 
-        BigDecimal totalCount = BigDecimal.ZERO;
+        //1.2 计算提现的总额
+        BigDecimal shouldWithdrawCount = BigDecimal.ZERO;
         for (BTCWithdraw withdraw : withdrawList) {
 
-            totalCount.add(withdraw.getCount());
+            shouldWithdrawCount = shouldWithdrawCount.add(withdraw.getCount());
 
         }
 
         //2.1批量处理这些提现请求，寻找合适的 utxo
         BigDecimal haveCount = this.withdrawUTXOMapper.selectCoinCount(EWithdrawUTXOStatus.UN_USE.getCode());
-        if (haveCount.compareTo(totalCount) <= 0) {
+        if (haveCount.compareTo(shouldWithdrawCount) <= 0) {
             // 相等或小于都应该是提现不成功，应为要有矿工费
+            // 大于也不一定成功，因为矿工费不能太小，容易交易失败
             throw new BizExpection(EBizError.WITHDRAW_COUNT_LESS);
         }
-        //2.2找出表中合适的utxo
+
+        //2.2找出表中合适的utxo， count 降序查出
+
+        //存储用于提现的utxo
+        List<BTCWithdrawUTXO> shouldUseWithdrawUTXO = new ArrayList<>();
+        BigDecimal hasSearchCount = BigDecimal.ZERO;
+        int pageNum = 0;
+        while (true) {
+
+            List<BTCWithdrawUTXO> canUseWithdrawUTXOList = this.withdrawUTXOMapper.selectListCanUseWithdraw(EWithdrawUTXOStatus.UN_USE.getCode(), pageNum, 20, "count", "DESC");
+
+            if (canUseWithdrawUTXOList == null || canUseWithdrawUTXOList.size() == 0) {
+                //已经遍历了所有的utxo
+                break;
+            }
+
+            for (BTCWithdrawUTXO canUseWithdraw : canUseWithdrawUTXOList) {
+
+                shouldUseWithdrawUTXO.add(canUseWithdraw);
+                hasSearchCount = hasSearchCount.add(canUseWithdraw.getCount());
+                if (hasSearchCount.compareTo(shouldWithdrawCount) > 0) {
+
+                    if (true/* 满足手续费的验证 */) {
+                        // 给定输入 和 输出 计算手续费
+
+                    } else {
+                        //不满足继续寻找
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        List<BTCWithdrawUTXO> canUseWithdrawUTXOList = this.withdrawUTXOMapper.selectListCanUseWithdraw(EWithdrawUTXOStatus.UN_USE.getCode(), 0, 20, "count", "DESC");
+
+        for (BTCWithdrawUTXO canUseWithdraw : canUseWithdrawUTXOList) {
+
+            hasSearchCount = hasSearchCount.add(canUseWithdraw.getCount());
+            if (hasSearchCount.compareTo(shouldWithdrawCount) > 0) {
+
+            }
+
+        }
 
         //3.变更提现请求状态，和utxo状态
 
@@ -452,7 +493,7 @@ public class BTCService implements IBTCService {
      *  待归集，等待下次归集
      */
     @Scheduled(cron = "*/10 * * * * ?")
-    public void handleUnColeectionSuccessUTXO() {
+    public void handleUnCollectionSuccessUTXO() {
 
         //暂时一次处理20条
         List<BTCDefaultUTXO> utxoList = this.defaultUTXOMapper.selectSuspiciousUTXOList(0, 20);
@@ -507,13 +548,6 @@ public class BTCService implements IBTCService {
 
     }
 
-    private String broadcastRawTxUrl() {
-
-        return "https://testnet.blockexplorer.com/api/tx/send";
-//        return "https://blockexplorer.com/api/tx/send";
-
-    }
-
     private Object convertOut(boolean isDefaultUTXO, BTCVoutUTXO btcOut, String txid, Long blockHeight, String status) {
 
         BTCScriptPubKey scriptPubKey = btcOut.getScriptPubKey();
@@ -547,6 +581,5 @@ public class BTCService implements IBTCService {
         }
 
     }
-
 
 }
