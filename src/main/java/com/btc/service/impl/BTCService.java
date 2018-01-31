@@ -282,7 +282,7 @@ public class BTCService implements IBTCService {
     }
 
     @Override
-//    @Scheduled(cron = "*/30 * * * * ?")
+    @Scheduled(cron = "*/10 * * * * ?")
     synchronized public String collection() {
 
         BigDecimal min = BigDecimal.ZERO;
@@ -302,7 +302,6 @@ public class BTCService implements IBTCService {
             throw new BizExpection("-2", "无可归金额");
         }
 
-
         BitcoinOfflineRawTxBuilder rawTxBuilder = new BitcoinOfflineRawTxBuilder();
         BigDecimal totalCount = BigDecimal.valueOf(0);
         //
@@ -314,7 +313,7 @@ public class BTCService implements IBTCService {
             totalCount = totalCount.add(utxo.getCount());
             BTCAddress btcAddress = this.addressMapper.selectByPrimaryKey(utxo.getAddress());
 
-            //构造签名交易
+            //构造签名交易，输入
             OfflineTxInput offlineTxInput = new OfflineTxInput(txid, vout, utxo.getScriptPubKey(), btcAddress.getPrivatekey());
             rawTxBuilder.in(offlineTxInput);
 
@@ -322,57 +321,40 @@ public class BTCService implements IBTCService {
 
         //如何估算手续费，先预先给一个size,然后拿这个size进行签名
         //对签名的数据进行解码，拿到真实大小，然后进行矿工费的修正
-        int preSize = BitcoinOfflineRawTxBuilder.calculateSize(rawTxBuilder.getInputs().size(), rawTxBuilder.getOutputs().size());
 
-        int prePerByte = 150;
-        //预估的手续费 sat
-        int preFee = preSize * prePerByte;
-        BigDecimal preReturnCount = totalCount.subtract(BigDecimal.valueOf(preFee));
-        //要进行单位转换
-        OfflineTxOutput offlineTxOutput = new OfflineTxOutput(collectionAddress, this.convert(preReturnCount));
+        int preSize = BitcoinOfflineRawTxBuilder.calculateSize(UTXOList.size(), 1);
+        int feePerByte = this.blockDataService.getFee();
+
+        //计算出手续费
+        int preFee = preSize * feePerByte;
+
+        //构造输出
+        OfflineTxOutput offlineTxOutput = new OfflineTxOutput(collectionAddress, this.convert(totalCount.subtract(BigDecimal.valueOf(preFee))));
         rawTxBuilder.out(offlineTxOutput);
+
 
         try {
 
+
             String signResult = rawTxBuilder.offlineSign();
-            //拿到结果进行解码，获取真实Size
-            rawTxBuilder.decodeRawTxToGetSizeAndTxid(signResult);
-            //decode 成功之后，才能获取下面的数据
-            Long trueSize = rawTxBuilder.getSize();
-
-            //开始修正输入手续费
-            Integer feePerByte = this.blockDataService.getFee();
-            BigDecimal trueFee = BigDecimal.valueOf(trueSize).multiply(BigDecimal.valueOf(feePerByte));
-
-            //重新构造交易, 转换为 1.3232 这种格式
-            offlineTxOutput.setAmount(this.convert(totalCount.subtract(trueFee)));
-            rawTxBuilder.reloadOut(offlineTxOutput);
-
-            //得到最终结果
-            String lastSignResult = rawTxBuilder.offlineSign();
-            //重新decode 为了获取真实的txid
-            rawTxBuilder.decodeRawTxToGetSizeAndTxid(lastSignResult);
-            String spendTxid = rawTxBuilder.getTxid();
-
-            // 这里更新数据库
-            for (BTCDefaultUTXO utxo : UTXOList) {
-
-                //这里更新utxo的 status 和 spend_txid
-                BTCDefaultUTXO updateDefaultUTXO = new BTCDefaultUTXO();
-                updateDefaultUTXO.setTxid(utxo.getTxid());
-                updateDefaultUTXO.setVout(utxo.getVout());
-
-                updateDefaultUTXO.setStatus(EDefaultUTXOStatus.COLLECTION_ING.getCode());
-                updateDefaultUTXO.setSpendTxid(spendTxid);
-                updateDefaultUTXO.setCollectionTime(new Date());
-                this.defaultUTXOMapper.updateByPrimaryKeySelective(updateDefaultUTXO);
-
-            }
 
             //2.进行广播
-            String trueTxid = this.blockDataService.broadcastRawTx(lastSignResult);
+            String trueTxid = this.blockDataService.broadcastRawTx(signResult);
             if (trueTxid != null) {
 
+                for (BTCDefaultUTXO utxo : UTXOList) {
+
+                    //这里更新utxo的 status 和 spend_txid
+                    BTCDefaultUTXO updateDefaultUTXO = new BTCDefaultUTXO();
+                    updateDefaultUTXO.setTxid(utxo.getTxid());
+                    updateDefaultUTXO.setVout(utxo.getVout());
+                    updateDefaultUTXO.setStatus(EDefaultUTXOStatus.COLLECTION_ING.getCode());
+                    updateDefaultUTXO.setSpendTxid(trueTxid);
+                    updateDefaultUTXO.setCollectionTime(new Date());
+                    //
+                    this.defaultUTXOMapper.updateByPrimaryKeySelective(updateDefaultUTXO);
+
+                }
                 return trueTxid;
 
             } else {
@@ -381,11 +363,13 @@ public class BTCService implements IBTCService {
 
             }
 
+
         } catch (Exception e) {
 
             throw new BizExpection("-100", e.getMessage());
 
         }
+
 
     }
 
@@ -619,7 +603,8 @@ public class BTCService implements IBTCService {
 
     }
 
-    private Object convertOut(boolean isDefaultUTXO, BTCVoutUTXO btcOut, String txid, Long blockHeight, String status) {
+    private Object convertOut(boolean isDefaultUTXO, BTCVoutUTXO btcOut, String txid, Long blockHeight, String
+            status) {
 
         BTCScriptPubKey scriptPubKey = btcOut.getScriptPubKey();
 
