@@ -50,7 +50,7 @@ public class BTCController {
 
     @GetMapping("utxos/{status}")
     @ResponseBody
-    public List<BTCDefaultUTXO> utxoList(@PathVariable("status") String status){
+    public List<BTCDefaultUTXO> utxoList(@PathVariable("status") String status) {
 
         return this.btcService.selectUTXOList(status);
 
@@ -62,6 +62,14 @@ public class BTCController {
 
         return "{\"name\" : \"tianlei\"}";
 //        return testService.test();
+    }
+
+    @GetMapping(value = "withdraw")
+    @ResponseBody
+    public void withdraw() {
+
+        this.btcService.handleWithdraw();
+
     }
 
 }

@@ -32,8 +32,9 @@
             <include refid="Base_Column_List"/>
         FROM btc_withdraw_utxo
         WHERE status=#{status}
+        order by ${orderBy} ${sort}
         limit #{start},#{limit}
-        order by #{orderBy},#{sort}
+
     </select>
 
     <insert id="insertBatch" parameterType="List">

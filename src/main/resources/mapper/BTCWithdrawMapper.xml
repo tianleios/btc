@@ -18,7 +18,7 @@
     <select id="selectList" resultMap="BaseResultMap">
         SELECT
         <include refid="Base_Column_List"/>
-        FROM btc_withdraw WHERE `status`=#{status}, limit #{start},#{limit}
+        FROM btc_withdraw WHERE `status`=#{status} limit #{start},#{limit}
     </select>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">

@@ -7,13 +7,11 @@ import com.btc.Expection.EBizError;
 import com.btc.domain.BTCInfo.BTCFee;
 import com.btc.domain.original.BTCOriginalTx;
 import com.btc.domain.original.BTCTXs;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -23,29 +21,10 @@ public class BTCBlockDataService {
 
     public static void main(String[] args) {
 
-        Request req = new Request.Builder()
-                .get()
-                .url("https://testnet.blockexplorer.com/api/tx/5756ff16e2b9f881cd15b8a7e478b4899965f87f553b6210d0f8e5bf5be7df1d")
-                .build();
+        BTCBlockDataService service = new BTCBlockDataService();
+        String txid = service.broadcastRawTx("12");
 
-        try {
-
-            Call call = okHttpClient.newCall(req);
-            Response response = call.execute();
-            if (response.code() == 404) {
-
-
-            } else {
-
-
-            }
-
-        } catch (Exception e) {
-
-            throw new BizExpection(EBizError.BLOCK_GET_ERROR);
-
-        }
-
+        int a = 10;
     }
 
     private Integer maxFeePerByteCanAccept = 300;
@@ -125,7 +104,7 @@ public class BTCBlockDataService {
 
     }
 
-    public String broadcastRawTxUrl() {
+    private String broadcastRawTxUrl() {
 
         return this.baseApiURL() + "/tx/send";
 
@@ -133,6 +112,54 @@ public class BTCBlockDataService {
 
     public Integer getMaxFeePerByteCanAccept() {
         return maxFeePerByteCanAccept;
+    }
+
+    /**
+     * 成功返回 txid, 失败返回null
+     *
+     * @param rawTx
+     * @return
+     */
+    @Nullable
+    public String broadcastRawTx(String rawTx) {
+
+        try {
+
+            //2.进行广播
+            FormBody formBody = new FormBody.Builder().add("rawtx", rawTx).build();
+            Request request = new Request.Builder()
+                    .post(formBody)
+                    .url(this.broadcastRawTxUrl())
+                    .build();
+            //
+            Call call = okHttpClient.newCall(request);
+            Response response = call.execute();
+            if (response.code() == 200) {
+
+                String jsonStr = response.body().string();
+                Map map = JSON.parseObject(jsonStr, HashMap.class);
+                String trueTxid = (String) map.get("txid");
+                if (trueTxid == null && trueTxid.length() <= 0) {
+
+                    return null;
+
+                } else {
+
+                    return trueTxid;
+                }
+
+            } else {
+
+                return null;
+
+            }
+
+
+        } catch (Exception e) {
+
+            return null;
+        }
+
     }
 
     //
