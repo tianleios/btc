@@ -336,6 +336,17 @@ public class BTCService implements IBTCService {
         try {
 
 
+            {
+              // 只要输入输出定好，大小就不变，和输出value大小无关
+//            String signResult = rawTxBuilder.offlineSign();
+//            rawTxBuilder.decodeRawTxToGetSizeAndTxid(signResult);
+//            Long trueSize = rawTxBuilder.getSize();
+//            BigDecimal trueFee = BigDecimal.valueOf(feePerByte*trueSize);
+//            OfflineTxOutput reloadOfflineOutPut = new OfflineTxOutput(collectionAddress,this.convert(totalCount.s(trueFee)));
+//            rawTxBuilder.reloadOut(reloadOfflineOutPut);
+//            String lastSign = rawTxBuilder.offlineSign();
+            }
+
             String signResult = rawTxBuilder.offlineSign();
 
             //2.进行广播
@@ -372,6 +383,7 @@ public class BTCService implements IBTCService {
 
 
     }
+
 
     @Override
     @Transactional
@@ -489,7 +501,6 @@ public class BTCService implements IBTCService {
                         }
 
                         //3. 进行交易签名
-
                         String offlineSign = offlineRawTxBuilder.offlineSign();
                         String trueTxid = this.blockDataService.broadcastRawTx(offlineSign);
                         if (trueTxid != null) {
