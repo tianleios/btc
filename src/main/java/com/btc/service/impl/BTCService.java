@@ -296,7 +296,7 @@ public class BTCService implements IBTCService {
 
         }
 
-        //先取最多40条
+        //先取40条
         List<BTCDefaultUTXO> UTXOList = this.defaultUTXOMapper.selectList(statusCode, 0, 40);
         if (UTXOList == null || UTXOList.size() <= 0) {
             throw new BizExpection("-2", "无可归金额");
@@ -337,7 +337,8 @@ public class BTCService implements IBTCService {
 
 
             {
-              // 只要输入输出定好，大小就不变，和输出value大小无关
+                // 只要输入输出定好，大小就不变，和输出value大小无关
+                // 下面这种可以获得最真实的大小
 //            String signResult = rawTxBuilder.offlineSign();
 //            rawTxBuilder.decodeRawTxToGetSizeAndTxid(signResult);
 //            Long trueSize = rawTxBuilder.getSize();
@@ -436,15 +437,15 @@ public class BTCService implements IBTCService {
             throw new BizExpection(withdrawCountLess, "提现账户余额不足");
         }
 
-        //2.2找出表中合适的utxo， count 降序查出
-
         //存储用于提现的utxo
         List<BTCWithdrawUTXO> shouldUseWithdrawUTXO = new ArrayList<>();
         BigDecimal hasSearchCount = BigDecimal.ZERO;
         int pageNum = 0;
+
         while (true) {
 
-            List<BTCWithdrawUTXO> canUseWithdrawUTXOList = this.withdrawUTXOMapper.selectListCanUseWithdraw(EWithdrawUTXOStatus.UN_USE.getCode(), pageNum, 1, "count", "DESC");
+            //2.2找出表中合适的utxo， count降序查出
+            List<BTCWithdrawUTXO> canUseWithdrawUTXOList = this.withdrawUTXOMapper.selectListCanUseWithdraw(EWithdrawUTXOStatus.UN_USE.getCode(), pageNum, 100, "count", "DESC");
 
             if (canUseWithdrawUTXOList == null || canUseWithdrawUTXOList.size() == 0) {
                 // 已经遍历了所有的utxo
@@ -469,15 +470,12 @@ public class BTCService implements IBTCService {
                         //说明找到到的提现 utxo 基本满足需求
 
                         BitcoinOfflineRawTxBuilder offlineRawTxBuilder = new BitcoinOfflineRawTxBuilder();
-
                         //1. 构造输入， 同时改变utxo状态
                         for (BTCWithdrawUTXO withdrawUTXO : shouldUseWithdrawUTXO) {
 
                             BTCAddress address = this.addressMapper.selectByPrimaryKey(withdrawUTXO.getAddress());
-
                             OfflineTxInput offlineTxInput = new OfflineTxInput(withdrawUTXO.getTxid(), withdrawUTXO.getVout(), withdrawUTXO.getScriptPubKey(), address.getPrivatekey());
                             offlineRawTxBuilder.in(offlineTxInput);
-
 
                         }
 

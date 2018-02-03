@@ -35,7 +35,7 @@ CREATE TABLE `btc_withdraw_utxo` (
   `vout` INT      NOT NULL,
   `count` DECIMAL(64,0) NOT NULL,
   `script_pub_key` TEXT NOT NULL,
-  `address` CHAR(34) NOT NULL ,
+  `address` VARCHAR(40) NOT NULL ,
   `sync_time` TIMESTAMP NOT NULL ,
   `block_height` INT NOT NULL ,
   `status` VARCHAR(4) NOT NULL ,
